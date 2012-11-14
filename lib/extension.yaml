@@ -1,0 +1,17 @@
+bits: 0 # 0 means the bits of Dart SDK 
+compiler:    
+  includes: ['{DART_SDK}/include', '/opt/cuda/include']  
+  input_files:
+  - 'webcl.cc'
+clean: [ '*.exp', '*.lib', '*.o', '*.obj']    
+linker:
+  input_files:
+  - 'webcl' 
+  - 'wrapper/libclwrapper.a'   
+platforms:
+  linux:
+    compiler:
+      arguments: ['-fPIC', '-Wall', '-std=gnu++0x']      
+    linker:    
+      arguments: ['-shared', '-lOpenCL']
+      output_file: 'libwebcl.so'

@@ -1,0 +1,6 @@
+name:  webcl
+description:  A WebCL implementation in Dart
+author: Nelson Silva <nelson.silva@inevo.pt>
+
+dependencies:
+  ccompile: 0.1.6

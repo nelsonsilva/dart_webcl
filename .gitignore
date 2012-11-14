@@ -1,0 +1,4 @@
+packages
+pubspec.lock
+lib/wrapper
+*.so
