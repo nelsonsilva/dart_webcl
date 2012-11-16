@@ -4,7 +4,7 @@ import 'dart:math' as Math;
 import 'dart:scalarlist';
 
 // TODO - Dart doesn't like package: with native extensions
-import 'packages/webcl/webcl.dart' as WebCL;
+import 'packages/webcl/webcl.dart';
 
 var clProgramVectorAdd =
 '__kernel void ckVectorAdd(__global unsigned int* vectorIn1,\n'
@@ -21,10 +21,11 @@ main() {
   try {
     
   // Generate input vectors
-  var vectorLength = 30;
-  var UIvector1 = new Uint32List(vectorLength);    
-  var UIvector2 = new Uint32List(vectorLength);
-  var outBuffer = new Uint32List(vectorLength);
+  var vectorLength = 30000;
+  var UIvector1 = new Uint32Array(vectorLength);
+  var UIvector2 = new Uint32Array(vectorLength);
+  var outBuffer = new Uint32Array(vectorLength);
+
   var rnd = new Math.Random();
   for ( var i=0; i<vectorLength;  i=i+1) {
       UIvector1[i] = rnd.nextInt(100); //Random number 0..99
@@ -35,6 +36,7 @@ main() {
 
   // Setup WebCL context using the default device of the first platform 
   var platforms = WebCL.platforms;
+
   var ctx = WebCL.createContextFromType([WebCL.CONTEXT_PLATFORM,  platforms[0]], WebCL.DEVICE_TYPE_GPU);
         
   // Reserve buffers

@@ -668,6 +668,23 @@ void WebCLCommandQueue_enqueueNDRangeKernel(Dart_NativeArguments arguments) {
     Dart_ExitScope();    
 }
 
+void getTypedArrayData(Dart_Handle array, void **ptr) {
+
+    Dart_Handle type = Dart_GetClass(library, Dart_NewStringFromCString("TypedArray"));
+    bool isTypedArray;
+    Dart_ObjectIsType(array, type, &isTypedArray);
+                 
+    if (isTypedArray) {
+    	array = Dart_GetField(array, Dart_NewStringFromCString("_list8"));
+    }                    
+     
+    if ( Dart_IsByteArrayExternal(array)) {
+   		Dart_ExternalByteArrayGetData(array, ptr);
+   	} else { 
+   		LOG("\nIT'S NOT AN EXTERNAL BYTE ARRAY :/");
+   	}
+}
+
 void WebCLCommandQueue_enqueueWriteBuffer(Dart_NativeArguments arguments) {
 	Dart_EnterScope();
 	   	   
@@ -688,16 +705,7 @@ void WebCLCommandQueue_enqueueWriteBuffer(Dart_NativeArguments arguments) {
     Dart_IntegerToUint64(Dart_GetNativeArgument(arguments, 4), &cb);
     
     void *ptr;
-    
-   if ( Dart_IsByteArrayExternal(Dart_GetNativeArgument(arguments, 5))) {
-   		LOG("\nYES IT'S AN EXTERNAL BYTE ARRAY =)");
-   		 Dart_ExternalByteArrayGetData(Dart_GetNativeArgument(arguments, 5), &ptr);
-   	} else { 
-   		LOG("\nIT'S NOT AN EXTERNAL BYTE ARRAY :/");
-   	}
-   	
-    
-   
+    getTypedArrayData(Dart_GetNativeArgument(arguments, 5), &ptr);
 
 	Dart_Handle eventWaitArray = Dart_GetNativeArgument(arguments, 6);
     intptr_t eventWaitArrayLength;
@@ -757,7 +765,7 @@ void WebCLCommandQueue_enqueueReadBuffer(Dart_NativeArguments arguments) {
     Dart_IntegerToUint64(Dart_GetNativeArgument(arguments, 4), &cb);
     
     void *ptr;
-    Dart_ExternalByteArrayGetData(Dart_GetNativeArgument(arguments, 5), &ptr);
+    getTypedArrayData(Dart_GetNativeArgument(arguments, 5), &ptr);
 
 	Dart_Handle eventWaitArray = Dart_GetNativeArgument(arguments, 6);
     intptr_t eventWaitArrayLength;
@@ -813,12 +821,38 @@ void WebCLCommandQueue_finish(Dart_NativeArguments arguments) {
     Dart_ExitScope();
 }
 
+void ExternalList_Free(void* buffer) {
+  delete[] reinterpret_cast<uint8_t*>(buffer);
+}
+
+void ExternalList_Allocate(Dart_NativeArguments arguments) {
+  Dart_EnterScope();
+
+  uint64_t size;
+  Dart_IntegerToUint64(Dart_GetNativeArgument(arguments, 0), &size);
+    
+  uint8_t* data = new uint8_t[size];
+  Dart_Handle result = Dart_NewExternalByteArray(data,
+                                                 size,
+                                                 data,
+                                                 ExternalList_Free);
+  
+  if (Dart_IsError(result)) {
+    ExternalList_Free(data);
+    Dart_PropagateError(result);
+  }
+
+  Dart_SetReturnValue(arguments, result);
+  Dart_ExitScope();
+}
+
 struct FunctionLookup {
   const char* name;
   Dart_NativeFunction function;
 };
 
 FunctionLookup function_list[] = {
+	{"AllocateExternalList", ExternalList_Allocate},
     {"GetPlatforms", GetPlatforms},
     {"CreateContextFromType", CreateContextFromType}, 
     {"WebCLPlatform_getDevices", WebCLPlatform_getDevices},
